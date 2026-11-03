@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Lets us also write dark:something when we need it */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 1. Light theme values (default) */
+:root {
+  --page: #fdf0d5;
+  --surface: #fff8e8;
+  --ink: #003049;
+  --muted: #4f6b7d;
+  --line: #e6d5ae;
+  --primary: #c1121f;
+  --primary-hover: #780000;
+  --accent: #669bbc;
+}
+
+/* 2. Dark theme values: used when <html> has class="dark" */
+.dark {
+  --page: #001b2a;
+  --surface: #00283d;
+  --ink: #fdf0d5;
+  --muted: #9db4c3;
+  --line: #0f4c6e;
+  --primary: #e63946;
+  --primary-hover: #c1121f;
+  --accent: #669bbc;
+}
+
+/* 3. Turn the variables into Tailwind classes */
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+}
+
+body {
+  background-color: var(--page);
+  color: var(--ink);
+}
