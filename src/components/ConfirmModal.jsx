@@ -1,4 +1,10 @@
-function ConfirmModal({ title, message, onConfirm, onCancel }) {
+function ConfirmModal({
+  title,
+  message,
+  onConfirm,
+  onCancel,
+  confirmText = 'Yes, confirm',
+}) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div
@@ -21,7 +27,7 @@ function ConfirmModal({ title, message, onConfirm, onCancel }) {
             onClick={onConfirm}
             className="bg-primary hover:bg-primary-hover text-white rounded-lg px-4 py-2"
           >
-            Yes, confirm
+            {confirmText}
           </button>
         </div>
       </div>
