@@ -4,13 +4,19 @@ import useData from '../hooks/useData'
 import AssignmentCard from '../components/AssignmentCard'
 import ConfirmModal from '../components/ConfirmModal'
 import ProgressBar from '../components/ProgressBar'
+import LoadingSkeleton from '../components/LoadingSkeleton'
 
 function StudentDashboard() {
   const { currentUser } = useAuth()
-  const { assignments, submissions, markSubmitted } = useData()
+  const { assignments, submissions, isLoading, markSubmitted } = useData()
 
   // Which assignment is waiting for the final confirmation? (null = none)
   const [assignmentToConfirm, setAssignmentToConfirm] = useState(null)
+
+  // Still loading? Show placeholders instead of the real page
+  if (isLoading) {
+    return <LoadingSkeleton />
+  }
 
   // Only the assignments given to this student
   const myAssignments = assignments.filter((a) =>

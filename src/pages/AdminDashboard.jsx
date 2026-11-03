@@ -4,15 +4,27 @@ import useData from '../hooks/useData'
 import AdminAssignmentCard from '../components/AdminAssignmentCard'
 import AssignmentForm from '../components/AssignmentForm'
 import ConfirmModal from '../components/ConfirmModal'
+import LoadingSkeleton from '../components/LoadingSkeleton'
 
 function AdminDashboard() {
   const { currentUser } = useAuth()
-  const { assignments, submissions, addAssignment, updateAssignment, deleteAssignment } =
-    useData()
+  const {
+    assignments,
+    submissions,
+    isLoading,
+    addAssignment,
+    updateAssignment,
+    deleteAssignment,
+  } = useData()
 
   const [showForm, setShowForm] = useState(false)
   const [editingAssignment, setEditingAssignment] = useState(null) // null = creating new
   const [assignmentToDelete, setAssignmentToDelete] = useState(null)
+
+  // Still loading? Show placeholders instead of the real page
+  if (isLoading) {
+    return <LoadingSkeleton />
+  }
 
   // Admins only see assignments they created
   const myAssignments = assignments.filter((a) => a.createdBy === currentUser.id)
