@@ -1,10 +1,18 @@
 import formatDate from '../utils/formatDate'
+import { isOverdue } from '../utils/assignmentHelpers'
 
 function AssignmentCard({ assignment, submission, onSubmitClick }) {
   const isSubmitted = Boolean(submission)
 
+  // Overdue only matters if the student has NOT submitted yet
+  const overdue = !isSubmitted && isOverdue(assignment.dueDate)
+
   return (
-    <div className="bg-surface border border-line rounded-xl p-4 sm:p-5 flex flex-col gap-3">
+    <div
+      className={`motion-safe:animate-fade-in bg-surface border rounded-xl p-4 sm:p-5 flex flex-col gap-3 ${
+        overdue ? 'border-primary' : 'border-line'
+      }`}
+    >
       <div className="flex items-start justify-between gap-3">
         <h3 className="text-lg font-semibold">{assignment.title}</h3>
 
@@ -23,7 +31,14 @@ function AssignmentCard({ assignment, submission, onSubmitClick }) {
 
       <p className="text-sm">
         <span className="text-muted">Due: </span>
-        <span className="font-semibold">{formatDate(assignment.dueDate)}</span>
+        <span className={overdue ? 'font-semibold text-primary' : 'font-semibold'}>
+          {formatDate(assignment.dueDate)}
+        </span>
+        {overdue && (
+          <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary text-white">
+            Overdue
+          </span>
+        )}
       </p>
 
       {isSubmitted && (

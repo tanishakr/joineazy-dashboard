@@ -1,5 +1,6 @@
 import { users } from '../data/seedData'
 import formatDate from '../utils/formatDate'
+import { isOverdue } from '../utils/assignmentHelpers'
 import ProgressBar from './ProgressBar'
 
 function AdminAssignmentCard({ assignment, submissions, onEdit, onDelete }) {
@@ -16,13 +17,23 @@ function AdminAssignmentCard({ assignment, submissions, onEdit, onDelete }) {
   const submittedCount = studentRows.filter((row) => row.hasSubmitted).length
   const percent = total === 0 ? 0 : Math.round((submittedCount / total) * 100)
 
+  const pastDue = isOverdue(assignment.dueDate)
+
   return (
-    <div className="bg-surface border border-line rounded-xl p-4 sm:p-5 flex flex-col gap-3">
+    <div className="motion-safe:animate-fade-in bg-surface border border-line rounded-xl p-4 sm:p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">{assignment.title}</h3>
           <p className="text-sm text-muted">
-            Due {formatDate(assignment.dueDate)}
+            Due{' '}
+            <span className={pastDue ? 'font-semibold text-primary' : ''}>
+              {formatDate(assignment.dueDate)}
+            </span>
+            {pastDue && (
+              <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-primary text-white">
+                Past due
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
