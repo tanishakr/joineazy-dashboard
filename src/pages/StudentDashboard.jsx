@@ -5,6 +5,15 @@ import AssignmentCard from '../components/AssignmentCard'
 import ConfirmModal from '../components/ConfirmModal'
 import ProgressBar from '../components/ProgressBar'
 import LoadingSkeleton from '../components/LoadingSkeleton'
+import FilterBar from '../components/FilterBar'
+import { isOverdue, sortAssignments } from '../utils/assignmentHelpers'
+
+const statusOptions = [
+  { value: 'all', label: 'All assignments' },
+  { value: 'pending', label: 'Not submitted' },
+  { value: 'submitted', label: 'Submitted' },
+  { value: 'overdue', label: 'Overdue' },
+]
 
 function StudentDashboard() {
   const { currentUser } = useAuth()
@@ -12,6 +21,11 @@ function StudentDashboard() {
 
   // Which assignment is waiting for the final confirmation? (null = none)
   const [assignmentToConfirm, setAssignmentToConfirm] = useState(null)
+
+  // Search, filter and sort choices
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [sort, setSort] = useState('due-asc')
 
   // Still loading? Show placeholders instead of the real page
   if (isLoading) {
@@ -30,9 +44,33 @@ function StudentDashboard() {
     )
   }
 
+  // Progress is always calculated from ALL of my assignments, not the filtered ones
   const total = myAssignments.length
   const submittedCount = myAssignments.filter((a) => findSubmission(a.id)).length
   const percent = total === 0 ? 0 : Math.round((submittedCount / total) * 100)
+
+  // Step 1: keep only the assignments that match the search and status filter
+  const matchingAssignments = myAssignments.filter((a) => {
+    const matchesSearch = a.title
+      .toLowerCase()
+      .includes(search.toLowerCase().trim())
+
+    const submitted = Boolean(findSubmission(a.id))
+    let matchesStatus = true
+    if (status === 'submitted') matchesStatus = submitted
+    if (status === 'pending') matchesStatus = !submitted
+    if (status === 'overdue') matchesStatus = !submitted && isOverdue(a.dueDate)
+
+    return matchesSearch && matchesStatus
+  })
+
+  // Step 2: sort what is left
+  const visibleAssignments = sortAssignments(matchingAssignments, sort)
+
+  function clearFilters() {
+    setSearch('')
+    setStatus('all')
+  }
 
   function handleConfirm() {
     markSubmitted(assignmentToConfirm.id, currentUser.id)
@@ -60,16 +98,40 @@ function StudentDashboard() {
           <p className="text-muted">Your professors haven't assigned anything to you.</p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {myAssignments.map((assignment) => (
-            <AssignmentCard
-              key={assignment.id}
-              assignment={assignment}
-              submission={findSubmission(assignment.id)}
-              onSubmitClick={setAssignmentToConfirm}
-            />
-          ))}
-        </div>
+        <>
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            status={status}
+            onStatusChange={setStatus}
+            statusOptions={statusOptions}
+            sort={sort}
+            onSortChange={setSort}
+          />
+
+          {visibleAssignments.length === 0 ? (
+            <div className="text-center bg-surface border border-line rounded-xl p-10">
+              <p className="text-lg font-semibold">No assignments match your filters</p>
+              <button
+                onClick={clearFilters}
+                className="mt-3 border border-line rounded-lg px-4 py-2 hover:bg-page"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {visibleAssignments.map((assignment) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  submission={findSubmission(assignment.id)}
+                  onSubmitClick={setAssignmentToConfirm}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {assignmentToConfirm && (

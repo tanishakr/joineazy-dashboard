@@ -5,6 +5,14 @@ import AdminAssignmentCard from '../components/AdminAssignmentCard'
 import AssignmentForm from '../components/AssignmentForm'
 import ConfirmModal from '../components/ConfirmModal'
 import LoadingSkeleton from '../components/LoadingSkeleton'
+import FilterBar from '../components/FilterBar'
+import { isOverdue, sortAssignments } from '../utils/assignmentHelpers'
+
+const statusOptions = [
+  { value: 'all', label: 'All assignments' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'past-due', label: 'Past due' },
+]
 
 function AdminDashboard() {
   const { currentUser } = useAuth()
@@ -21,6 +29,11 @@ function AdminDashboard() {
   const [editingAssignment, setEditingAssignment] = useState(null) // null = creating new
   const [assignmentToDelete, setAssignmentToDelete] = useState(null)
 
+  // Search, filter and sort choices
+  const [search, setSearch] = useState('')
+  const [status, setStatus] = useState('all')
+  const [sort, setSort] = useState('due-asc')
+
   // Still loading? Show placeholders instead of the real page
   if (isLoading) {
     return <LoadingSkeleton />
@@ -28,6 +41,27 @@ function AdminDashboard() {
 
   // Admins only see assignments they created
   const myAssignments = assignments.filter((a) => a.createdBy === currentUser.id)
+
+  // Step 1: keep only the assignments that match the search and status filter
+  const matchingAssignments = myAssignments.filter((a) => {
+    const matchesSearch = a.title
+      .toLowerCase()
+      .includes(search.toLowerCase().trim())
+
+    let matchesStatus = true
+    if (status === 'past-due') matchesStatus = isOverdue(a.dueDate)
+    if (status === 'upcoming') matchesStatus = !isOverdue(a.dueDate)
+
+    return matchesSearch && matchesStatus
+  })
+
+  // Step 2: sort what is left
+  const visibleAssignments = sortAssignments(matchingAssignments, sort)
+
+  function clearFilters() {
+    setSearch('')
+    setStatus('all')
+  }
 
   function openCreateForm() {
     setEditingAssignment(null)
@@ -81,17 +115,41 @@ function AdminDashboard() {
           <p className="text-muted">Click "New assignment" to create your first one.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {myAssignments.map((assignment) => (
-            <AdminAssignmentCard
-              key={assignment.id}
-              assignment={assignment}
-              submissions={submissions}
-              onEdit={openEditForm}
-              onDelete={setAssignmentToDelete}
-            />
-          ))}
-        </div>
+        <>
+          <FilterBar
+            search={search}
+            onSearchChange={setSearch}
+            status={status}
+            onStatusChange={setStatus}
+            statusOptions={statusOptions}
+            sort={sort}
+            onSortChange={setSort}
+          />
+
+          {visibleAssignments.length === 0 ? (
+            <div className="text-center bg-surface border border-line rounded-xl p-10">
+              <p className="text-lg font-semibold">No assignments match your filters</p>
+              <button
+                onClick={clearFilters}
+                className="mt-3 border border-line rounded-lg px-4 py-2 hover:bg-page"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {visibleAssignments.map((assignment) => (
+                <AdminAssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  submissions={submissions}
+                  onEdit={openEditForm}
+                  onDelete={setAssignmentToDelete}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {showForm && (
